@@ -13,6 +13,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+
 
   <!-- ============ HEADER ============ -->
   <header class="header" id="header">
@@ -36,18 +39,57 @@
   <main id="top">
 
     <!-- ============ HERO ============ -->
-    <section class="hero">
-      <div class="hero__sun" aria-hidden="true"></div>
+    <section class="hero" id="hero">
+      <canvas class="hero__fx" id="heroFx" aria-hidden="true"></canvas>
+      <div class="hero__beam" aria-hidden="true"><i></i><i></i></div>
+      <div class="hero__stage" aria-hidden="true">
+        <div class="hero__lamp"></div>
+        <svg class="hero__barbell" viewBox="0 0 800 220" fill="none">
+          <defs>
+            <linearGradient id="gPlate" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ff4a3d"/>
+              <stop offset=".06" stop-color="#9e1016"/>
+              <stop offset=".3" stop-color="#2a0405"/>
+              <stop offset=".75" stop-color="#0a0a0a"/>
+              <stop offset="1" stop-color="#050505"/>
+            </linearGradient>
+            <linearGradient id="gPlate2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffd9cf"/>
+              <stop offset=".05" stop-color="#6a6a6a"/>
+              <stop offset=".35" stop-color="#1c1c1c"/>
+              <stop offset="1" stop-color="#060606"/>
+            </linearGradient>
+            <linearGradient id="gSteel" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset=".35" stop-color="#9a9a9a"/>
+              <stop offset="1" stop-color="#2b2b2b"/>
+            </linearGradient>
+          </defs>
+          <rect x="20" y="104" width="760" height="9" rx="4" fill="url(#gSteel)"/>
+          <rect x="20" y="100" width="150" height="17" rx="4" fill="url(#gSteel)"/>
+          <rect x="630" y="100" width="150" height="17" rx="4" fill="url(#gSteel)"/>
+          <rect x="166" y="92" width="10" height="33" rx="3" fill="url(#gSteel)"/>
+          <rect x="624" y="92" width="10" height="33" rx="3" fill="url(#gSteel)"/>
+          <rect x="176" y="8" width="34" height="202" rx="7" fill="url(#gPlate)"/>
+          <rect x="212" y="8" width="34" height="202" rx="7" fill="url(#gPlate)"/>
+          <rect x="248" y="38" width="22" height="142" rx="6" fill="url(#gPlate2)"/>
+          <rect x="590" y="8" width="34" height="202" rx="7" fill="url(#gPlate)"/>
+          <rect x="554" y="8" width="34" height="202" rx="7" fill="url(#gPlate)"/>
+          <rect x="530" y="38" width="22" height="142" rx="6" fill="url(#gPlate2)"/>
+        </svg>
+        <div class="hero__floor"></div>
+      </div>
+      <div class="hero__vignette" aria-hidden="true"></div>
       <div class="hero__grain" aria-hidden="true"></div>
       <div class="hero__content">
-        <p class="eyebrow reveal">Sport Hub · Фітнес-клуб</p>
-        <h1 class="hero__title reveal">
-          <span>Сила</span>
-          <span class="outline">без</span>
-          <span>компромісів</span>
+        <p class="eyebrow hero__eyebrow">Sport Hub · Фітнес-клуб</p>
+        <h1 class="hero__title">
+          <span class="line"><span>Сила</span></span>
+          <span class="line"><span class="outline">без</span></span>
+          <span class="line"><span>компромісів</span></span>
         </h1>
-        <p class="hero__lead reveal">Простір для тих, хто тренується всерйоз. Професійне обладнання, тренери-практики та атмосфера, у якій хочеться піднімати більше.</p>
-        <div class="hero__actions reveal">
+        <p class="hero__lead">Простір для тих, хто тренується всерйоз. Професійне обладнання, тренери-практики та атмосфера, у якій хочеться піднімати більше.</p>
+        <div class="hero__actions">
           <a href="#signup" class="btn">Записатися на пробне</a>
           <a href="#prices" class="btn btn--ghost">Абонементи</a>
         </div>
