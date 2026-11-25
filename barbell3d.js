@@ -151,8 +151,9 @@ window.initBarbell3D = function () {
     if (!drag.on) return;
     var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX; drag.y = e.clientY;
-    drag.vy = dx * 0.009; drag.vp = dy * 0.006;
-    drag.yaw += drag.vy; drag.pitch = Math.max(-1.1, Math.min(1.1, drag.pitch + drag.vp));
+    var ny = dx * 0.008, np = dy * 0.005;
+    drag.vy = drag.vy * 0.6 + ny * 0.4; drag.vp = drag.vp * 0.6 + np * 0.4;   // calm finger jitter
+    drag.yaw += ny; drag.pitch = Math.max(-1.1, Math.min(1.1, drag.pitch + np));
   }, { passive: true });
   ["pointerup", "pointercancel"].forEach(function (n) { window.addEventListener(n, function () { drag.on = false; }); });
 
@@ -164,8 +165,9 @@ window.initBarbell3D = function () {
     gyro.b0 += (e.beta - gyro.b0) * 0.004;           // slowly re-centre
     gyro.g0 += (e.gamma - gyro.g0) * 0.004;
     var d = Math.PI / 180;
-    gyro.yaw = Math.max(-Math.PI, Math.min(Math.PI, (e.gamma - gyro.g0) * d * 2.4));
-    gyro.pitch = Math.max(-0.95, Math.min(0.95, (e.beta - gyro.b0) * d * 1.4));
+    var gy = Math.max(-Math.PI, Math.min(Math.PI, (e.gamma - gyro.g0) * d * 2.2));
+    var gp = Math.max(-0.95, Math.min(0.95, (e.beta - gyro.b0) * d * 1.3));
+    gyro.yaw += (gy - gyro.yaw) * 0.18; gyro.pitch += (gp - gyro.pitch) * 0.18;   // sensor noise filter
   }
   if (touch && ("ontouchstart" in window) && window.DeviceOrientationEvent) {
     if (typeof DeviceOrientationEvent.requestPermission === "function") {
@@ -185,8 +187,8 @@ window.initBarbell3D = function () {
   /* ---- layout + render loop ---- */
   var W = 0, H = 0;
   function resize() {
-    var w = window.innerWidth, h = window.innerHeight;
-    if (w === W && Math.abs(h - H) < 2) return;
+    var w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+    if (w === W && h === H) return;
     W = w; H = h; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   }
   window.addEventListener("resize", resize); resize();
@@ -195,10 +197,12 @@ window.initBarbell3D = function () {
   function lerp(a, b, t) { return a + (b - a) * t; }
   function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  var last = performance.now(), spin = 0, started = false, tick = 0;
+  var last = performance.now(), spin = 0, started = false;
+  var pos = null;   // smoothed position / scale
   function frame(now) {
     requestAnimationFrame(frame);
     if (document.hidden || (modal && !modal.hidden)) { last = now; return; }
+    if (now - last > 200) last = now - 16;
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     var t = now / 1000;
     resize();
@@ -214,26 +218,30 @@ window.initBarbell3D = function () {
     var bx = wide ? W * 0.18 * upp : 0, by = wide ? 0 : H * 0.05 * upp;
     var p = ease(clamp(window.scrollY / (hero.offsetHeight * 0.8), 0, 1));
 
-    pivot.position.set(lerp(hx, bx, p), lerp(hy, by, p), 0);
-    pivot.scale.setScalar(lerp(hs, bs, p));
+    // glide toward the target instead of snapping to every scroll step
+    var tx = lerp(hx, bx, p), ty = lerp(hy, by, p), ts = lerp(hs, bs, p);
+    if (!pos) pos = { x: tx, y: ty, s: ts };
+    var kp = 1 - Math.exp(-dt * 9);
+    pos.x += (tx - pos.x) * kp; pos.y += (ty - pos.y) * kp; pos.s += (ts - pos.s) * kp;
+    pivot.position.set(pos.x, pos.y, 0);
+    pivot.scale.setScalar(pos.s);
     canvas.style.setProperty("--dim", (1 - p * (wide ? 0.7 : 0.82)).toFixed(3));
 
     if (!drag.on) {                       // inertia, then settle
-      drag.yaw += drag.vy; drag.vy *= 0.94;
-      drag.vp *= 0.9;
-      if (!gyro.on) drag.pitch *= 0.985;
+      var f = dt * 60;                    // frame-rate independent
+      drag.yaw += drag.vy * f; drag.vy *= Math.pow(0.95, f);
+      drag.vp *= Math.pow(0.9, f);
+      if (!gyro.on) drag.pitch *= Math.pow(0.988, f);
     }
     spin += dt * (0.06 + p * 0.14) * (reduce ? 0 : 1);
     var sway = reduce ? 0 : Math.sin(t * 0.35) * 0.28;
     var tYaw = 0.55 + sway + spin + window.scrollY * 0.0011 + drag.yaw + gyro.yaw;
     var tPitch = 0.2 + (reduce ? 0 : Math.sin(t * 0.5) * 0.04) + drag.pitch + gyro.pitch + p * 0.25;
-    var k = 1 - Math.exp(-dt * (drag.on ? 18 : 7));
+    var k = 1 - Math.exp(-dt * (drag.on ? 12 : 5));
     cur.yaw += (tYaw - cur.yaw) * k; cur.pitch += (tPitch - cur.pitch) * k;
     pivot.rotation.set(cur.pitch, 0, 0);
     bar.rotation.set(0, cur.yaw, Math.sin(t * 0.3) * 0.02);
 
-    // in the background on phones, 30 fps is plenty
-    if (touch && p > 0.95 && !drag.on && (tick++ & 1)) return;
     renderer.render(scene, camera);
     if (!started) { started = true; root.classList.add("has-3d"); setTimeout(function () { root.classList.add("bar3d-live"); }, 2600); }
   }
