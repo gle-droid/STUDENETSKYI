@@ -139,7 +139,6 @@
   var drag = { on: false, x: 0, y: 0, yaw: 0, pitch: 0, vy: 0, vp: 0, used: false };
   var gyro = { on: false, yaw: 0, pitch: 0, b0: null, g0: null };
   var cur = { yaw: 0.5, pitch: 0.2 };
-  var hint = document.getElementById("stageHint");
 
   stage.addEventListener("pointerdown", function (e) {
     if (e.target.closest(".gyro-btn")) return;
@@ -152,7 +151,6 @@
     drag.x = e.clientX; drag.y = e.clientY;
     drag.vy = dx * 0.009; drag.vp = dy * 0.006;
     drag.yaw += drag.vy; drag.pitch = Math.max(-1.1, Math.min(1.1, drag.pitch + drag.vp));
-    if (!drag.used && Math.abs(dx) > 2) { drag.used = true; if (hint) hint.style.opacity = "0"; }
   }, { passive: true });
   ["pointerup", "pointercancel"].forEach(function (n) { window.addEventListener(n, function () { drag.on = false; }); });
 
@@ -166,18 +164,17 @@
     var d = Math.PI / 180;
     gyro.yaw = Math.max(-Math.PI, Math.min(Math.PI, (e.gamma - gyro.g0) * d * 2.4));
     gyro.pitch = Math.max(-0.95, Math.min(0.95, (e.beta - gyro.b0) * d * 1.4));
-    if (hint) hint.style.opacity = "0";
   }
-  var btn = document.getElementById("gyroBtn");
   if (touch && ("ontouchstart" in window) && window.DeviceOrientationEvent) {
     if (typeof DeviceOrientationEvent.requestPermission === "function") {
-      btn.hidden = false;
-      btn.addEventListener("click", function () {
+      // iOS asks once, on the visitor's first tap anywhere on the page
+      var ask = function () {
+        document.removeEventListener("touchend", ask);
         DeviceOrientationEvent.requestPermission().then(function (s) {
-          if (s === "granted") { window.addEventListener("deviceorientation", onOrient); btn.hidden = true; }
-          else { btn.hidden = true; }
-        }).catch(function () { btn.hidden = true; });
-      });
+          if (s === "granted") window.addEventListener("deviceorientation", onOrient);
+        }).catch(function () {});
+      };
+      document.addEventListener("touchend", ask);
     } else {
       window.addEventListener("deviceorientation", onOrient);
     }
