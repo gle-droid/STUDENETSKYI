@@ -141,6 +141,7 @@
   var nav = document.getElementById("nav");
   function setMenu(open) {
     nav.classList.toggle("is-open", open);
+    document.body.classList.toggle("menu-open", open);
     burger.setAttribute("aria-expanded", String(open));
     burger.setAttribute("aria-label", open ? "Закрити меню" : "Відкрити меню");
     document.body.style.overflow = open ? "hidden" : "";
