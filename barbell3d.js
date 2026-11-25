@@ -1,7 +1,8 @@
 /* STUDENETSKIY — 3D barbell: drag, device tilt and scroll */
-(function () {
+window.initBarbell3D = function () {
   "use strict";
-  if (!window.THREE) return;
+  if (!window.THREE || window.__bar3d) return;
+  window.__bar3d = true;
   var T = THREE;
   var canvas = document.getElementById("bar3d");
   var stage = document.getElementById("stage");
@@ -16,7 +17,7 @@
     renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
   } catch (e) { return; }
   if (!renderer.getContext()) return;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, touch ? 1.75 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, touch ? 1.5 : 2));
   renderer.outputEncoding = T.sRGBEncoding;
   renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
@@ -194,7 +195,7 @@
   function lerp(a, b, t) { return a + (b - a) * t; }
   function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 
-  var last = performance.now(), spin = 0, started = false;
+  var last = performance.now(), spin = 0, started = false, tick = 0;
   function frame(now) {
     requestAnimationFrame(frame);
     if (document.hidden || (modal && !modal.hidden)) { last = now; return; }
@@ -231,8 +232,10 @@
     pivot.rotation.set(cur.pitch, 0, 0);
     bar.rotation.set(0, cur.yaw, Math.sin(t * 0.3) * 0.02);
 
+    // in the background on phones, 30 fps is plenty
+    if (touch && p > 0.95 && !drag.on && (tick++ & 1)) return;
     renderer.render(scene, camera);
     if (!started) { started = true; root.classList.add("has-3d"); setTimeout(function () { root.classList.add("bar3d-live"); }, 2600); }
   }
   requestAnimationFrame(frame);
-})();
+};

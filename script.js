@@ -226,8 +226,14 @@
     function rnd(a, b) { return a + Math.random() * (b - a); }
     function makeMote() { return { u: rnd(-1, 1), v: rnd(0, 1), s: rnd(0.4, 1.8), sp: rnd(0.0002, 0.0009), dr: rnd(-0.0006, 0.0006), tw: rnd(0, 6.28) }; }
     function makeSmoke() { return { u: rnd(-0.8, 0.8), v: rnd(0.25, 1), r: rnd(120, 300), sp: rnd(0.00008, 0.0002), a: rnd(0.04, 0.09), ph: rnd(0, 6.28) }; }
-    for (var i = 0; i < 110; i++) motes.push(makeMote());
-    for (var j = 0; j < 9; j++) smoke.push(makeSmoke());
+    var lite = !finePointer;
+    for (var i = 0; i < (lite ? 60 : 110); i++) motes.push(makeMote());
+    for (var j = 0; j < (lite ? 5 : 9); j++) smoke.push(makeSmoke());
+    // one pre-rendered soft puff instead of a new gradient per puff per frame
+    var puff = document.createElement("canvas"); puff.width = puff.height = 128;
+    var pg = puff.getContext("2d"), pgr = pg.createRadialGradient(64, 64, 0, 64, 64, 64);
+    pgr.addColorStop(0, "rgba(200,30,30,1)"); pgr.addColorStop(1, "rgba(200,30,30,0)");
+    pg.fillStyle = pgr; pg.fillRect(0, 0, 128, 128);
     resize();
     window.addEventListener("resize", resize);
 
@@ -244,10 +250,7 @@
         s.v -= s.sp; if (s.v < 0.15) { s.v = 1.05; s.u = rnd(-0.8, 0.8); }
         var y = g.top + s.v * g.h, half = g.w / 2 * (0.12 + 0.88 * s.v);
         var x = g.cx + s.u * half + Math.sin(t / 3000 + s.ph) * 40;
-        var grd = ctx.createRadialGradient(x, y, 0, x, y, s.r);
-        grd.addColorStop(0, "rgba(200,30,30," + s.a * intro + ")");
-        grd.addColorStop(1, "rgba(200,30,30,0)");
-        ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(x, y, s.r, 0, 6.283); ctx.fill();
+        ctx.globalAlpha = s.a * intro; ctx.drawImage(puff, x - s.r, y - s.r, s.r * 2, s.r * 2); ctx.globalAlpha = 1;
       });
       // dust motes inside the cone
       motes.forEach(function (m) {
@@ -376,4 +379,23 @@
   });
 
   document.getElementById("year").textContent = new Date().getFullYear();
+
+  /* ---------- 3D barbell: load three.js only after the page is shown ---------- */
+  var bar3d = document.getElementById("bar3d");
+  function webglOK() {
+    try { var c = document.createElement("canvas"); return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl"))); }
+    catch (e) { return false; }
+  }
+  if (bar3d && bar3d.dataset.three && webglOK()) {
+    root.classList.add("will-3d");
+    var load3D = function () {
+      var sc = document.createElement("script");
+      sc.src = bar3d.dataset.three; sc.async = true;
+      sc.onload = function () { if (window.initBarbell3D) window.initBarbell3D(); };
+      sc.onerror = function () { root.classList.remove("will-3d"); };
+      document.body.appendChild(sc);
+    };
+    var whenIdle = function () { (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(load3D, { timeout: 1500 }); };
+    if (document.readyState === "complete") whenIdle(); else window.addEventListener("load", whenIdle);
+  }
 })();

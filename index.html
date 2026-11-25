@@ -9,14 +9,14 @@
   <link rel="icon" href="assets/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="progress" id="progress" aria-hidden="true"></div>
   <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
   <div class="atmo" aria-hidden="true"><i></i><i></i><i></i><span class="atmo__lines"></span></div>
-  <canvas class="bar3d" id="bar3d" aria-hidden="true"></canvas>
+  <canvas class="bar3d" id="bar3d" data-three="assets/vendor/three.min.js" aria-hidden="true"></canvas>
 
 
   <!-- ============ HEADER ============ -->
@@ -438,7 +438,6 @@
     </div>
   </div>
 
-  <script src="assets/vendor/three.min.js"></script>
   <script src="script.js"></script>
   <script src="barbell3d.js"></script>
 </body>
