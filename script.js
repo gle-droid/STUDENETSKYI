@@ -5,6 +5,46 @@
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
+  /* ---------- text splitting for motion ---------- */
+  function wrapWords(el) {
+    var i = 0;
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (n) {
+        if (n.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(function (part) {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(" ")); return; }
+            var m = document.createElement("span"); m.className = "wm";
+            var w = document.createElement("span"); w.className = "wi"; w.textContent = part;
+            w.style.setProperty("--i", i++); m.appendChild(w); frag.appendChild(m);
+          });
+          node.replaceChild(frag, n);
+        } else if (n.nodeType === 1 && n.tagName !== "BR") walk(n);
+      });
+    })(el);
+  }
+  document.querySelectorAll(".split").forEach(wrapWords);
+
+  var ci = 0;
+  document.querySelectorAll(".hero__title .line > span").forEach(function (span) {
+    var text = span.textContent; span.textContent = "";
+    span.setAttribute("aria-hidden", "true");
+    for (var k = 0; k < text.length; k++) {
+      var c = document.createElement("span"); c.className = "ch"; c.textContent = text[k];
+      c.style.setProperty("--i", ci++); span.appendChild(c);
+    }
+  });
+  var h1 = document.querySelector(".hero__title");
+  if (h1) h1.setAttribute("aria-label", "Сила без компромісів");
+
+  document.querySelectorAll(".btn, .nav a").forEach(function (el) {
+    var t = el.textContent.trim(); el.textContent = "";
+    var r = document.createElement("span"); r.className = "roll";
+    var s = document.createElement("span"); s.textContent = t;
+    r.appendChild(s); el.appendChild(r);
+  });
+
   /* ---------- intro: lights on ---------- */
   requestAnimationFrame(function () { requestAnimationFrame(function () { document.body.classList.add("is-loaded"); }); });
 
@@ -104,12 +144,13 @@
 
   /* ---------- reveal + counters ---------- */
   function countUp(el) {
-    var target = +el.dataset.count, start = null, dur = 2000;
-    if (reduce) { el.textContent = target; return; }
+    var target = +el.dataset.count, start = null, dur = target >= 1000 ? 2400 : 2000;
+    function fmt(v) { return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F"); }
+    if (reduce) { el.textContent = fmt(target); return; }
     function step(t) {
       if (!start) start = t;
       var p = Math.min((t - start) / dur, 1);
-      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 4)));
+      el.textContent = fmt(Math.round(target * (1 - Math.pow(1 - p, 4))));
       if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -129,7 +170,7 @@
     items.forEach(function (el) { io.observe(el); });
   } else {
     items.forEach(function (el) { el.classList.add("is-in"); });
-    document.querySelectorAll("[data-count]").forEach(function (el) { el.textContent = el.dataset.count; });
+    document.querySelectorAll("[data-count]").forEach(function (el) { el.textContent = el.dataset.count.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202F"); });
   }
 
   /* ---------- pointer light: cursor glow + card spotlights ---------- */
