@@ -6,6 +6,7 @@
   var canvas = document.getElementById("bar3d");
   var stage = document.getElementById("stage");
   var hero = document.getElementById("hero");
+  var modal = document.getElementById("coachModal");
   var root = document.documentElement;
   var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var touch = window.matchMedia("(hover: none)").matches;
@@ -196,7 +197,7 @@
   var last = performance.now(), spin = 0, started = false;
   function frame(now) {
     requestAnimationFrame(frame);
-    if (document.hidden) { last = now; return; }
+    if (document.hidden || (modal && !modal.hidden)) { last = now; return; }
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     var t = now / 1000;
     resize();

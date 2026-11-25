@@ -76,7 +76,13 @@
   }
 
   /* anchors with easing */
-  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+  function goTo(id) {
+    var el = id === "#top" ? document.body : document.querySelector(id);
+    if (!el) return;
+    var y = id === "#top" ? 0 : el.getBoundingClientRect().top + window.scrollY - 60;
+    if (smooth.on) smoothTo(y); else window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
+  }
+  document.querySelectorAll('a[href^="#"]:not(.cm__cta)').forEach(function (a) {
     a.addEventListener("click", function (e) {
       var id = a.getAttribute("href");
       var el = id === "#top" ? document.body : document.querySelector(id);
@@ -189,7 +195,7 @@
     }, { passive: true });
     document.addEventListener("pointerleave", function () { glow.classList.remove("is-on"); });
 
-    document.querySelectorAll(".program, .price, .coach__photo, .form").forEach(function (el) {
+    document.querySelectorAll(".program, .price, .coach__photo, .form, .result").forEach(function (el) {
       el.addEventListener("pointermove", function (e) {
         var r = el.getBoundingClientRect();
         el.style.setProperty("--mx", (e.clientX - r.left) + "px");
@@ -265,15 +271,71 @@
     fxRaf = requestAnimationFrame(frame);
   }
 
+
+  /* ---------- coach modal: the photo glides out of the card ---------- */
+  var cm = document.getElementById("coachModal");
+  if (cm) {
+    var cmPhoto = document.getElementById("cmPhoto"), cmRole = document.getElementById("cmRole"),
+        cmName = document.getElementById("cmName"), cmBody = document.getElementById("cmBody"),
+        cmCta = document.getElementById("cmCta"), cmClose = cm.querySelector(".cm__close");
+    var activeCard = null, busy = false;
+    var EASE_OUT = "cubic-bezier(.22, 1, .36, 1)", EASE_IO = "cubic-bezier(.65, 0, .35, 1)";
+    function delta(from, to) {
+      return "translate(" + (from.left - to.left) + "px," + (from.top - to.top) + "px) scale(" + (from.width / to.width) + ")";
+    }
+    function openCoach(card) {
+      if (busy || activeCard) return;
+      busy = true; activeCard = card;
+      var src = card.querySelector(".coach__photo");
+      cmPhoto.innerHTML = src.innerHTML;
+      cmRole.textContent = card.querySelector(".coach__role").textContent;
+      cmName.textContent = card.querySelector(".coach__name").textContent;
+      cmBody.innerHTML = card.querySelector(".coach__more").innerHTML;
+      cm.hidden = false; cm.scrollTop = 0;
+      document.body.style.overflow = "hidden";
+      var from = src.getBoundingClientRect(), to = cmPhoto.getBoundingClientRect();
+      src.style.visibility = "hidden";
+      requestAnimationFrame(function () { cm.classList.add("is-open"); });
+      var anim = cmPhoto.animate([{ transform: delta(from, to) }, { transform: "none" }],
+        { duration: reduce ? 1 : 1000, easing: EASE_OUT });
+      anim.onfinish = function () { busy = false; try { cmClose.focus({ preventScroll: true }); } catch (e) {} };
+    }
+    function closeCoach(after) {
+      if (busy || !activeCard) return;
+      busy = true;
+      var card = activeCard, src = card.querySelector(".coach__photo");
+      var to = src.getBoundingClientRect(), from = cmPhoto.getBoundingClientRect();
+      cm.classList.remove("is-open"); cm.classList.add("is-closing");
+      var anim = cmPhoto.animate([{ transform: "none" }, { transform: delta(to, from) }],
+        { duration: reduce ? 1 : 800, easing: EASE_IO, fill: "forwards" });
+      anim.onfinish = function () {
+        src.style.visibility = "";
+        cm.hidden = true; cm.classList.remove("is-closing"); anim.cancel();
+        document.body.style.overflow = "";
+        activeCard = null; busy = false;
+        if (after) after(); else { try { card.focus({ preventScroll: true }); } catch (e) {} }
+      };
+    }
+    document.querySelectorAll(".coach").forEach(function (card) {
+      card.addEventListener("click", function () { openCoach(card); });
+      card.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCoach(card); }
+      });
+    });
+    cm.querySelectorAll("[data-close]").forEach(function (el) { el.addEventListener("click", function () { closeCoach(); }); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && activeCard) closeCoach(); });
+    cmCta.addEventListener("click", function (e) { e.preventDefault(); closeCoach(function () { goTo("#signup"); }); });
+  }
+
   /* ---------- schedule ---------- */
   var schedule = [
-    [["07:30", "Функціональний тренінг", "Ранкова група"], ["12:00", "Важка атлетика", "Техніка ривка"], ["18:30", "Пауерліфтинг", "Присід"], ["20:00", "Мобільність", "Відновлення"]],
-    [["08:00", "Важка атлетика", "Техніка поштовху"], ["17:00", "Функціональний тренінг", "Інтенсив"], ["19:00", "Пауерліфтинг", "Жим лежачи"]],
-    [["07:30", "Функціональний тренінг", "Ранкова група"], ["12:00", "Важка атлетика", "Силова база"], ["18:30", "Пауерліфтинг", "Станова тяга"], ["20:00", "Мобільність", "Відновлення"]],
-    [["08:00", "Важка атлетика", "Техніка ривка"], ["17:00", "Функціональний тренінг", "Інтенсив"], ["19:00", "Пауерліфтинг", "Присід"]],
-    [["07:30", "Функціональний тренінг", "Ранкова група"], ["12:00", "Важка атлетика", "Комплекси"], ["18:30", "Функціональний тренінг", "Командний WOD"]],
-    [["10:00", "Важка атлетика", "Відкритий помост"], ["12:00", "Функціональний тренінг", "Партнерське тренування"]],
-    [["11:00", "Мобільність", "Розтяжка та відновлення"]]
+    [["16:00", "Дитяча група", "Основи та координація"], ["17:30", "Спортивна група", "Ривок"], ["19:00", "Доросла група", "Техніка ривка"]],
+    [["16:00", "Дитяча група", "Загальна фізична підготовка"], ["17:30", "Спортивна група", "Поштовх"], ["19:00", "Доросла група", "Присід і тяги"]],
+    [["16:00", "Дитяча група", "Основи та координація"], ["17:30", "Спортивна група", "Ривок"], ["19:00", "Доросла група", "Техніка поштовху"]],
+    [["16:00", "Дитяча група", "Загальна фізична підготовка"], ["17:30", "Спортивна група", "Поштовх"], ["19:00", "Доросла група", "Присід і тяги"]],
+    [["16:00", "Дитяча група", "Ігрове тренування"], ["17:30", "Спортивна група", "Класичні вправи"], ["19:00", "Доросла група", "Ривок і поштовх"]],
+    [["10:00", "Спортивна група", "Прикидка, максимальні спроби"], ["12:00", "Доросла група", "Відкритий поміст"]],
+    [["—", "Вихідний", "Відновлення"]]
   ];
   var timetable = document.getElementById("timetable");
   var tabs = document.querySelectorAll(".tab");
