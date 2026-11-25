@@ -168,8 +168,10 @@
       var r = beam.getBoundingClientRect(), hr = hero.getBoundingClientRect();
       return { cx: r.left - hr.left + r.width / 2, top: r.top - hr.top, w: r.width, h: r.height };
     }
+    var geom = null;
     function resize() {
-      W = hero.clientWidth; H = hero.clientHeight;
+      if (hero.clientWidth === W && Math.abs(hero.clientHeight - H) < 120) return;
+      W = hero.clientWidth; H = hero.clientHeight; geom = null;
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
@@ -185,7 +187,7 @@
     function frame(now) {
       fxRaf = 0;
       if (!heroVisible) return;
-      var t = now - t0, g = beamGeom();
+      var t = now - t0, g = geom || (geom = beamGeom());
       var intro = Math.min(1, Math.max(0, (t - 1800) / 1500));
       ctx.clearRect(0, 0, W, H);
       ctx.globalCompositeOperation = "lighter";
@@ -211,8 +213,6 @@
         ctx.beginPath(); ctx.arc(x, y, m.s, 0, 6.283); ctx.fill();
       });
       ctx.globalCompositeOperation = "source-over";
-      // gentle beam parallax
-      beam.style.setProperty("--px", ((mouseX - 0.5) * 30).toFixed(1) + "px");
       fxRaf = requestAnimationFrame(frame);
     }
     if ("IntersectionObserver" in window) {
@@ -221,7 +221,6 @@
         if (heroVisible && !fxRaf) fxRaf = requestAnimationFrame(frame);
       }).observe(hero);
     }
-    hero.addEventListener("pointermove", function (e) { mouseX = e.clientX / innerWidth; }, { passive: true });
     fxRaf = requestAnimationFrame(frame);
   }
 
