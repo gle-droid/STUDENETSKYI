@@ -128,6 +128,9 @@
         var r = statement.getBoundingClientRect(), vh = window.innerHeight;
         var p = reduce ? 1 : (vh * 0.85 - r.top) / (vh * 0.55);
         var lit = Math.round(Math.max(0, Math.min(1, p)) * words.length);
+        var sec = statement.closest(".statement");
+        sec.style.setProperty("--sp", Math.max(-0.5, Math.min(1.5, p)).toFixed(3));
+        sec.classList.toggle("is-lit", p > 0.02);
         for (var i = 0; i < words.length; i++) words[i].classList.toggle("is-lit", i < lit);
       }
     });
