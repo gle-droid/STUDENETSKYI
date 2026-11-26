@@ -875,3 +875,50 @@ a:hover > .roll > span, button:hover > .roll > span, a:focus-visible > .roll > s
   .statement.is-lit .lifter { opacity: .6; }
 }
 @media (prefers-reduced-motion: reduce) { .lifter { transform: none !important; } }
+
+/* ==========================================================
+   CHALK: warm white accents (lifting chalk / magnesia)
+   ========================================================== */
+:root { --chalk: #efebe4; --chalk-2: #f8f6f1; --ink: #121110; --ink-muted: #5d5750; }
+.chalk-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
+}
+
+/* ticker: a white chalk band */
+.ticker {
+  background-color: var(--chalk);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: 0 0 80px -10px rgba(239,235,228,.25);
+}
+.ticker span { color: var(--ink); font-weight: 600; }
+.ticker i { box-shadow: none; }
+
+/* results: a chalk-white section */
+.results {
+  background-color: var(--chalk); color: var(--ink);
+  border-top: 0; isolation: isolate;
+}
+.results::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 85% 0%, rgba(255,255,255,.9), transparent 70%),
+    radial-gradient(40% 40% at 0% 100%, rgba(196,22,28,.08), transparent 70%);
+}
+.results .h2 { color: var(--ink); }
+.results .eyebrow { color: var(--ink-muted); }
+.results p { color: var(--ink-muted); }
+.results .result {
+  background: var(--chalk-2); border-color: rgba(18,17,16,.1);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 20px 50px -30px rgba(18,17,16,.35);
+}
+.results .result:hover { border-color: rgba(196,22,28,.45); box-shadow: 0 30px 70px -30px rgba(196,22,28,.35); }
+.results .result::before { background: radial-gradient(420px circle at var(--mx) var(--my), rgba(196,22,28,.10), transparent 55%); }
+.results .result__title { color: var(--ink); }
+
+/* soft white light on dark surfaces */
+.statement { box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+.price--featured { box-shadow: 0 0 80px -20px rgba(196,22,28,.5), 0 0 0 1px rgba(255,255,255,.04) inset; }
+.spec__num { text-shadow: 0 0 40px rgba(255,255,255,.12), 0 0 50px rgba(196,22,28,.3); }
+.result__title { font-size: clamp(22px, 2vw, 30px); overflow-wrap: break-word; }
