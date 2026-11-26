@@ -76,20 +76,51 @@
   }
 
   /* anchors with easing */
-  function goTo(id) {
-    var el = id === "#top" ? document.body : document.querySelector(id);
-    if (!el) return;
-    var y = id === "#top" ? 0 : el.getBoundingClientRect().top + window.scrollY - 60;
-    if (smooth.on) smoothTo(y); else window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
+  /* eased, time-based scroll for links: gentle start, steady glide, soft landing */
+  var glide = null;
+  function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function stopGlide() {
+    if (!glide) return;
+    cancelAnimationFrame(glide.raf); glide = null;
+    smooth.y = smooth.target = window.scrollY;
   }
+  function glideTo(y) {
+    y = Math.max(0, Math.min(maxScroll(), y));
+    if (smooth.raf) { cancelAnimationFrame(smooth.raf); smooth.raf = 0; }
+    stopGlide();
+    var from = window.scrollY, dist = y - from;
+    if (Math.abs(dist) < 2) return;
+    if (reduce) { window.scrollTo(0, y); smooth.y = smooth.target = y; return; }
+    var dur = Math.min(1900, Math.max(750, 420 + Math.sqrt(Math.abs(dist)) * 13));
+    var start = null;
+    glide = { raf: 0 };
+    function step(now) {
+      if (!glide) return;
+      if (start === null) start = now;
+      var t = Math.min(1, (now - start) / dur);
+      window.scrollTo(0, from + dist * easeInOut(t));
+      if (t < 1) glide.raf = requestAnimationFrame(step);
+      else { glide = null; smooth.y = smooth.target = window.scrollY; }
+    }
+    glide.raf = requestAnimationFrame(step);
+  }
+  // a wheel, a touch or a key from the visitor takes over immediately
+  ["wheel", "touchstart", "keydown"].forEach(function (n) {
+    window.addEventListener(n, stopGlide, { passive: true, capture: true });
+  });
+  function targetY(id) {
+    if (id === "#top") return 0;
+    var el = document.querySelector(id);
+    return el ? el.getBoundingClientRect().top + window.scrollY - 60 : null;
+  }
+  function goTo(id) { var y = targetY(id); if (y !== null) glideTo(y); }
   document.querySelectorAll('a[href^="#"]:not(.cm__cta)').forEach(function (a) {
     a.addEventListener("click", function (e) {
       var id = a.getAttribute("href");
-      var el = id === "#top" ? document.body : document.querySelector(id);
-      if (!el) return;
+      if (targetY(id) === null) return;
       e.preventDefault();
-      var y = id === "#top" ? 0 : el.getBoundingClientRect().top + window.scrollY - 60;
-      if (smooth.on) smoothTo(y); else window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
+      // let the mobile menu start closing first, then glide
+      if (nav && nav.classList.contains("is-open")) setTimeout(function () { goTo(id); }, 60); else goTo(id);
     });
   });
 
