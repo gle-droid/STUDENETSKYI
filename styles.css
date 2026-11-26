@@ -812,3 +812,35 @@ a:hover > .roll > span, button:hover > .roll > span, a:focus-visible > .roll > s
   .atmo i:nth-child(3) { display: none; }
 }
 .ticker__track, .cursor-glow, .hero__fx { will-change: transform; }
+
+/* ---------- shelter banner ---------- */
+.shelter {
+  margin-top: clamp(40px, 6vw, 72px);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: center;
+  padding: clamp(24px, 3.5vw, 44px);
+  border: 1px solid rgba(196,22,28,.55);
+  background: linear-gradient(110deg, rgba(196,22,28,.2), rgba(0,0,0,.6) 55%);
+  position: relative; overflow: hidden;
+}
+.shelter::after {
+  content: ""; position: absolute; top: 0; left: 0; height: 100%; width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.06), transparent);
+  transform: translateX(-120%); animation: shelterSheen 7s cubic-bezier(.65,0,.35,1) infinite 2s;
+  pointer-events: none;
+}
+@keyframes shelterSheen { 0% { transform: translateX(-120%); } 50%, 100% { transform: translateX(320%); } }
+.shelter__icon {
+  width: clamp(64px, 7vw, 88px); aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; color: #fff;
+  background: radial-gradient(circle, var(--red), var(--red-deep));
+  box-shadow: 0 0 0 8px rgba(196,22,28,.12), 0 0 50px rgba(196,22,28,.6);
+  animation: shelterPulse 3.2s ease-in-out infinite;
+}
+@keyframes shelterPulse { 0%,100% { box-shadow: 0 0 0 8px rgba(196,22,28,.12), 0 0 40px rgba(196,22,28,.5); } 50% { box-shadow: 0 0 0 14px rgba(196,22,28,.06), 0 0 70px rgba(196,22,28,.75); } }
+.shelter__tag { margin: 0 0 6px; font-family: var(--display); font-size: 12px; letter-spacing: .24em; text-transform: uppercase; color: var(--red); }
+.shelter__title { margin: 0 0 10px; font-family: var(--display); font-weight: 600; text-transform: uppercase; font-size: clamp(28px, 3.6vw, 48px); line-height: 1; }
+.shelter__text p:last-child { margin: 0; color: rgba(244,241,236,.75); max-width: 60ch; }
+@media (max-width: 520px) {
+  .shelter { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .shelter::after, .shelter__icon { animation: none; } }
